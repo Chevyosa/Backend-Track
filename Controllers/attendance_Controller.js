@@ -110,24 +110,51 @@ const handleAttendance = (req, res) => {
       }
     );
   } else if (action === "checkout") {
-    attendance_status_id = currentHour > 17 ? 3 : 1;
-
     db.query(
-      "UPDATE attendance SET check_out_time = NOW(), attendance_status_id = ? WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL",
-      [attendance_status_id, userId],
+      "SELECT attendance_status_id, notes FROM attendance WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL",
+      [userId],
       (err, result) => {
         if (err) {
-          console.error("Error during check-out:", err.message);
-          return res.status(500).json({ message: "Failed to check out" });
+          console.error("Error retrieving attendance status:", err.message);
+          return res.status(500).json({ message: "Failed to retrieve attendance status" });
         }
-
-        if (result.affectedRows === 0) {
-          return res
-            .status(400)
-            .json({ message: "No active check-in found for today" });
+  
+        if (result.length === 0) {
+          return res.status(400).json({ message: "No active check-in found for today" });
         }
-
-        res.status(200).json({ message: "Check-out successful" });
+  
+        // Ambil status sebelumnya dan notes check-in
+        let previousAttendanceStatus = result[0].attendance_status_id;
+        let previousNotes = result[0].notes || "";
+  
+        // Jika check-in lebih dari jam 9, tetap late (status 2)
+        if (previousAttendanceStatus === 2) {
+          attendance_status_id = 2;
+        } else {
+          attendance_status_id = currentHour > 17 ? 3 : 1;
+        }
+  
+        // Gabungkan notes check-in dan notes checkout
+        const updatedNotes = previousNotes
+          ? `Check-in: ${previousNotes}\nCheck-out: ${notes}`
+          : `Check-out: ${notes}`;
+  
+        db.query(
+          "UPDATE attendance SET check_out_time = NOW(), attendance_status_id = ?, notes = ? WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL",
+          [attendance_status_id, updatedNotes, userId],
+          (err, result) => {
+            if (err) {
+              console.error("Error during check-out:", err.message);
+              return res.status(500).json({ message: "Failed to check out" });
+            }
+  
+            if (result.affectedRows === 0) {
+              return res.status(400).json({ message: "No active check-in found for today" });
+            }
+  
+            res.status(200).json({ message: "Check-out successful", notes: updatedNotes });
+          }
+        );
       }
     );
   } else {
