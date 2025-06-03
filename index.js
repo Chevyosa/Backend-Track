@@ -10,6 +10,7 @@ require("dotenv").config();
 
 const { verifyToken, checkRole } = require("./middleware/authMiddleWare.js");
 const attendanceRoutes = require("./routes/attendanceRoutes.js");
+const allAttendanceRoutes = require("./routes/allAttendanceRoutes.js");
 const authRoutes = require("./routes/authRoutes.js");
 const headProgramRoutes = require("./routes/headProgramRoutes.js");
 const otpRoutes = require("./routes/otpRoutes.js");
@@ -34,6 +35,7 @@ app.use("/divisions", divisionRoutes);
 app.use("/leave", leaveRoutes);
 app.use("/contacts", contactRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/all-attendance", allAttendanceRoutes);
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running at http://localhost:${port}`);
