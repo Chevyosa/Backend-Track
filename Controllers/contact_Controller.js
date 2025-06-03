@@ -8,6 +8,7 @@ const getContacts = async (req, res) => {
         u.name, 
         u.phone_number,
         u.email, 
+        u.profile_photo,
         p.positionId, 
         p.positionName 
       FROM 
@@ -35,10 +36,11 @@ const getContacts = async (req, res) => {
         name: contact.name,
         positionId: contact.positionId,
         positionName: contact.positionName,
+        profile_photo: contact.profile_photo,
         actions: {
-          call: `tel:${contact.phone_number}`,
-          email: `mailto:${contact.email}`,
-          whatsapp: `https://wa.me/${contact.phone_number}`,
+          call: contact.phone_number,
+          email: contact.email,
+          whatsapp: contact.phone_number,
         },
       }));
 

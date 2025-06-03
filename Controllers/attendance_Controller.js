@@ -13,8 +13,6 @@ const getAttendanceStatusId = (status) => {
 const officeLocation = {
   latitude: 1.1853587, // Latitude yang benar
   longitude: 104.1021903,
-  latitude: 1.1853258302684722,
-  longitude: 104.10194910214162,
 };
 
 const handleAttendance = (req, res) => {
@@ -27,18 +25,16 @@ const handleAttendance = (req, res) => {
   const now = new Date();
   const currentHour = now.getHours();
   let attendance_status_id;
+  const randomMinute = Math.floor(Math.random() * 60); // Acak menit antara 0-59
+  const randomSecond = Math.floor(Math.random() * 60); // Acak detik antara 0-59
+  now.setHours(8, randomMinute, randomSecond, 0);
 
-  console.log(
-    "File path (upload_image):",
-    req.file ? req.file.path : "No file"
-  );
+  console.log("File path (upload_image):", req.file ? req.file.path : "No file");
 
   if (action === "checkin") {
     if (attendance_category_id === 2) {
       if (!req.file) {
-        return res
-          .status(400)
-          .json({ message: "Image is required for Work From Home" });
+        return res.status(400).json({ message: "Image is required for Work From Home" });
       }
       upload_image = req.file.path;
       latitude = parseFloat(latitude);
@@ -52,25 +48,15 @@ const handleAttendance = (req, res) => {
 
       const distance = haversineDistance(officeLocation, userLocation);
       if (distance > allowedRadius) {
-        return res
-          .status(400)
-          .json({ message: "Location out of allowed radius" });
+        return res.status(400).json({ message: "Location out of allowed radius" });
       }
       upload_image = "";
     }
 
     attendance_status_id = currentHour < 9 ? 1 : 2;
     db.query(
-      "INSERT INTO attendance (check_in_time, check_out_time, userId, attendance_category_id, attendance_status_id, attendance_date, latitude, longitude, upload_image, notes) VALUES (NOW(), NULL, ?, ?, ?, CURDATE(), ?, ?, ?, ?)",
-      [
-        userId,
-        attendance_category_id,
-        attendance_status_id,
-        latitude,
-        longitude,
-        upload_image,
-        notes,
-      ],
+      "INSERT INTO attendance (check_in_time, fake_check_in_time, check_out_time, userId, attendance_category_id, attendance_status_id, attendance_date, latitude, longitude, upload_image, notes) VALUES (NOW(), ?, NULL, ?, ?, ?, CURDATE(), ?, ?, ?, ?)",
+      [now, userId, attendance_category_id, attendance_status_id, latitude, longitude, upload_image, notes],
       (err, result) => {
         if (err) {
           console.error("Error during check-in:", err.message);
@@ -86,81 +72,63 @@ const handleAttendance = (req, res) => {
           WHERE a.attendanceId = ?
         `;
 
-        db.query(
-          queryAttendanceDetails,
-          [attendanceId],
-          (err, detailsResult) => {
-            if (err) {
-              console.error(
-                "Error retrieving attendance details:",
-                err.message
-              );
-              return res
-                .status(500)
-                .json({ message: "Failed to retrieve attendance details" });
-            }
-
-            res.status(200).json({
-              message: "Check-in successful",
-              attendanceId,
-              attendance_status: detailsResult[0].attendance_status,
-            });
+        db.query(queryAttendanceDetails, [attendanceId], (err, detailsResult) => {
+          if (err) {
+            console.error("Error retrieving attendance details:", err.message);
+            return res.status(500).json({ message: "Failed to retrieve attendance details" });
           }
-        );
+
+          // Tentukan pesan berdasarkan attendance_status_id
+          const message = attendance_status_id === 1 ? "Check-in successful" : "Check-in successful (Late)";
+
+          res.status(200).json({
+            message,
+            attendanceId,
+            attendance_status: detailsResult[0].attendance_status,
+          });
+        });
       }
     );
   } else if (action === "checkout") {
-    db.query(
-      "SELECT attendance_status_id, notes FROM attendance WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL",
-      [userId],
-      (err, result) => {
+    db.query("SELECT attendance_status_id, notes FROM attendance WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL", [userId], (err, result) => {
+      if (err) {
+        console.error("Error retrieving attendance status:", err.message);
+        return res.status(500).json({ message: "Failed to retrieve attendance status" });
+      }
+
+      if (result.length === 0) {
+        return res.status(400).json({ message: "No active check-in found for today" });
+      }
+
+      // Ambil status sebelumnya dan notes check-in
+      let previousAttendanceStatus = result[0].attendance_status_id;
+      let previousNotes = result[0].notes || "";
+
+      // Jika check-in lebih dari jam 9, tetap late (status 2)
+      if (previousAttendanceStatus === 2) {
+        attendance_status_id = 2;
+      } else {
+        attendance_status_id = currentHour > 17 ? 3 : 1;
+      }
+
+      // Gabungkan notes check-in dan notes checkout
+      const updatedNotes = previousNotes ? `Check-in: ${previousNotes}\nCheck-out: ${notes}` : `Check-out: ${notes}`;
+
+      db.query("UPDATE attendance SET check_out_time = NOW(), attendance_status_id = ?, notes = ? WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL", [attendance_status_id, updatedNotes, userId], (err, result) => {
         if (err) {
-          console.error("Error retrieving attendance status:", err.message);
-          return res.status(500).json({ message: "Failed to retrieve attendance status" });
+          console.error("Error during check-out:", err.message);
+          return res.status(500).json({ message: "Failed to check out" });
         }
-  
-        if (result.length === 0) {
+
+        if (result.affectedRows === 0) {
           return res.status(400).json({ message: "No active check-in found for today" });
         }
-  
-        // Ambil status sebelumnya dan notes check-in
-        let previousAttendanceStatus = result[0].attendance_status_id;
-        let previousNotes = result[0].notes || "";
-  
-        // Jika check-in lebih dari jam 9, tetap late (status 2)
-        if (previousAttendanceStatus === 2) {
-          attendance_status_id = 2;
-        } else {
-          attendance_status_id = currentHour > 17 ? 3 : 1;
-        }
-  
-        // Gabungkan notes check-in dan notes checkout
-        const updatedNotes = previousNotes
-          ? `Check-in: ${previousNotes}\nCheck-out: ${notes}`
-          : `Check-out: ${notes}`;
-  
-        db.query(
-          "UPDATE attendance SET check_out_time = NOW(), attendance_status_id = ?, notes = ? WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL",
-          [attendance_status_id, updatedNotes, userId],
-          (err, result) => {
-            if (err) {
-              console.error("Error during check-out:", err.message);
-              return res.status(500).json({ message: "Failed to check out" });
-            }
-  
-            if (result.affectedRows === 0) {
-              return res.status(400).json({ message: "No active check-in found for today" });
-            }
-  
-            res.status(200).json({ message: "Check-out successful", notes: updatedNotes });
-          }
-        );
-      }
-    );
+
+        res.status(200).json({ message: "Check-out successful", notes: updatedNotes });
+      });
+    });
   } else {
-    res
-      .status(400)
-      .json({ message: "Invalid action. Should be checkin or checkout" });
+    res.status(400).json({ message: "Invalid action. Should be checkin or checkout" });
   }
 };
 
@@ -171,7 +139,6 @@ const getAttendanceOverview = (req, res) => {
     SELECT 
       COUNT(*) AS total_attendance,
       SUM(CASE WHEN attendance_status_id = 2 THEN 1 ELSE 0 END) AS late,
-      SUM(CASE WHEN is_absence = 1 THEN 1 ELSE 0 END) AS total_absence,
       SUM(CASE WHEN ac.attendance_category = 'Work From Office' THEN 1 ELSE 0 END) AS total_work_from_office,
       SUM(CASE WHEN ac.attendance_category = 'Work From Home' THEN 1 ELSE 0 END) AS total_work_from_home
     FROM attendance a
@@ -197,28 +164,19 @@ const getAttendanceOverview = (req, res) => {
   db.query(queryAccumulated, [userId], (err, accumulatedResult) => {
     if (err) {
       console.error("Error fetching accumulated attendance:", err.message);
-      return res
-        .status(500)
-        .json({ message: "Failed to fetch attendance overview" });
+      return res.status(500).json({ message: "Failed to fetch attendance overview" });
     }
 
     db.query(queryDaily, [userId], (err, dailyResult) => {
       if (err) {
         console.error("Error fetching daily attendance:", err.message);
-        return res
-          .status(500)
-          .json({ message: "Failed to fetch attendance overview" });
+        return res.status(500).json({ message: "Failed to fetch attendance overview" });
       }
 
       db.query(queryPreviousDay, [userId], (err, previousDayResult) => {
         if (err) {
-          console.error(
-            "Error fetching previous day's check-out time:",
-            err.message
-          );
-          return res
-            .status(500)
-            .json({ message: "Failed to fetch previous day's check-out time" });
+          console.error("Error fetching previous day's check-out time:", err.message);
+          return res.status(500).json({ message: "Failed to fetch previous day's check-out time" });
         }
 
         const formatDateTime = (dateTime) => {
@@ -231,20 +189,13 @@ const getAttendanceOverview = (req, res) => {
         const overview = {
           total_attendance: accumulatedResult[0].total_attendance || 0,
           late: accumulatedResult[0].late || 0,
-          total_absence: accumulatedResult[0].total_absence || 0,
-          total_work_from_office:
-            accumulatedResult[0].total_work_from_office || 0,
+          total_absence: 0,
+          total_work_from_office: accumulatedResult[0].total_work_from_office || 0,
           total_work_from_home: accumulatedResult[0].total_work_from_home || 0,
           active_attendance: dailyResult[0].active_attendance || 0,
           on_time: dailyResult[0].on_time || 0,
-          check_in_time: dailyResult[0].check_in_time
-            ? formatDateTime(dailyResult[0].check_in_time)
-            : null,
-          check_out_time: dailyResult[0].check_out_time
-            ? formatDateTime(dailyResult[0].check_out_time)
-            : previousDayResult[0].check_out_time
-            ? formatDateTime(previousDayResult[0].check_out_time)
-            : null,
+          check_in_time: dailyResult[0].check_in_time ? formatDateTime(dailyResult[0].check_in_time) : null,
+          check_out_time: dailyResult[0].check_in_time && dailyResult[0].check_out_time ? formatDateTime(dailyResult[0].check_out_time) : null,
         };
 
         res.status(200).json({

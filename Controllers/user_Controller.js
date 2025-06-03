@@ -137,6 +137,7 @@ const register = async (req, res) => {
       positionId = positionInsertResult.insertId;
     }
 
+
     await insertUser(
       name,
       email,
@@ -180,6 +181,14 @@ const insertUser = async (
     );
 
     const userId = userInsertResult.insertId;
+    const profile_photo = `https://api.dicebear.com/9.x/avataaars-neutral/png?seed=${userId}`;
+
+    // Update profile_photo setelah tahu userId
+    await queryAsync(
+      "UPDATE users SET profile_photo = ? WHERE userId = ?",
+      [profile_photo, userId]
+    );
+
     await queryAsync(
       "INSERT INTO leave_balance (userId, annual_balance, annual_used) VALUES (?, ?, ?)",
       [userId, annual_balance, annual_used]
@@ -210,6 +219,7 @@ const insertUser = async (
         name,
         annual_balance,
         annual_used,
+        profile_photo,
       },
       token: {
         token,
@@ -402,7 +412,8 @@ const getUserById = (req, res) => {
       users.name AS name, 
       users.divisionId AS divisionId, 
       divisions.division AS division, 
-      head_user.name AS headprogram 
+      head_user.name AS headprogram,
+      users.profile_photo AS profilePhoto
     FROM 
       users 
     LEFT JOIN 
@@ -428,6 +439,7 @@ const getUserById = (req, res) => {
       divisionId: result[0].divisionId,
       division: result[0].division,
       headprogram: result[0].headprogram,
+      profilePhoto: result[0].profilePhoto,
     };
 
     res.json(user);
