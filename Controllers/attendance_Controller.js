@@ -209,13 +209,15 @@ const getAttendanceOverview = (req, res) => {
 
   const queryDaily = `
     SELECT 
-      MAX(a.check_in_time) AS check_in_time,
-      MAX(a.check_out_time) AS check_out_time,
-      SUM(CASE WHEN check_out_time IS NULL THEN 1 ELSE 0 END) AS active_attendance,
-      SUM(CASE WHEN attendance_status_id = 1 THEN 1 ELSE 0 END) AS on_time
+      a.check_in_time,
+      a.check_out_time,
+      (SELECT COUNT(*) FROM attendance WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL) AS active_attendance,
+      (SELECT COUNT(*) FROM attendance WHERE userId = ? AND attendance_date = CURDATE() AND attendance_status_id = 1) AS on_time
     FROM attendance a
-    JOIN attendance_category ac ON a.attendance_category_id = ac.attendance_category_id
-    WHERE a.userId = ? AND a.attendance_date = CURDATE()`;
+    WHERE a.userId = ? AND a.attendance_date = CURDATE()
+    ORDER BY a.check_in_time DESC
+    LIMIT 1;
+  `;
 
   const queryPreviousDay = `
     SELECT 
@@ -231,7 +233,7 @@ const getAttendanceOverview = (req, res) => {
         .json({ message: "Failed to fetch attendance overview" });
     }
 
-    db.query(queryDaily, [userId], (err, dailyResult) => {
+    db.query(queryDaily, [userId, userId, userId], (err, dailyResult) => {
       if (err) {
         console.error("Error fetching daily attendance:", err.message);
         return res
@@ -257,6 +259,8 @@ const getAttendanceOverview = (req, res) => {
           return `${hh}:${mi}`;
         };
 
+        const row = dailyResult[0];
+
         const overview = {
           total_attendance: accumulatedResult[0].total_attendance || 0,
           late: accumulatedResult[0].late || 0,
@@ -264,15 +268,14 @@ const getAttendanceOverview = (req, res) => {
           total_work_from_office:
             accumulatedResult[0].total_work_from_office || 0,
           total_work_from_home: accumulatedResult[0].total_work_from_home || 0,
-          active_attendance: dailyResult[0].active_attendance || 0,
-          on_time: dailyResult[0].on_time || 0,
-          check_in_time: dailyResult[0].check_in_time
-            ? formatDateTime(dailyResult[0].check_in_time)
+          active_attendance: row.active_attendance || 0,
+          on_time: row.on_time || 0,
+          check_in_time: row.check_in_time
+            ? formatDateTime(row.check_in_time)
             : null,
-          check_out_time:
-            dailyResult[0].check_in_time && dailyResult[0].check_out_time
-              ? formatDateTime(dailyResult[0].check_out_time)
-              : null,
+          check_out_time: row.check_out_time
+            ? formatDateTime(row.check_out_time)
+            : null,
         };
 
         res.status(200).json({
