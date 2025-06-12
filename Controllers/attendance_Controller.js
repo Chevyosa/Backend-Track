@@ -53,9 +53,10 @@ const handleAttendance = (req, res) => {
 
       const distance = haversineDistance(officeLocation, userLocation);
       if (distance > allowedRadius) {
-        return res
-          .status(400)
-          .json({ message: "Location out of allowed radius" });
+        return res.status(400).json({
+          message: "Location out of allowed radius",
+          attendance_status: "outOfRadius",
+        });
       }
       upload_image = "";
     }
@@ -136,13 +137,10 @@ const handleAttendance = (req, res) => {
         }
 
         const attendanceId = result[0].attendanceId;
-        const previousAttendanceStatus = result[0].attendance_status_id;
         const previousNotes = result[0].notes || "";
 
-        if (previousAttendanceStatus === 2) {
-          attendance_status_id = 2;
-        } else {
-          attendance_status_id = currentHour > 17 ? 3 : 1;
+        if (currentHour > 17) {
+          attendance_status_id = 3;
         }
 
         const updatedNotes = previousNotes
@@ -150,8 +148,8 @@ const handleAttendance = (req, res) => {
           : `Check-out: ${notes}`;
 
         db.query(
-          "UPDATE attendance SET check_out_time = NOW(), attendance_status_id = ?, notes = ? WHERE attendanceId = ?",
-          [attendance_status_id, updatedNotes, attendanceId],
+          "UPDATE attendance SET check_out_time = NOW(), notes = ? WHERE attendanceId = ?",
+          [updatedNotes, attendanceId],
           (err, updateResult) => {
             if (err) {
               console.error("Error during check-out:", err.message);
