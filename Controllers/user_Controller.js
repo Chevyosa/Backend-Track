@@ -230,7 +230,7 @@ const insertUser = async (
   }
 };
 
-const updateUser = (req, res) => {
+const updateUserbyAdmin = (req, res) => {
   const userId = parseInt(req.params.id);
   const { phone_number, nip_nim, address, start_contract, end_contract } =
     req.body;
@@ -269,41 +269,6 @@ const updateUser = (req, res) => {
         res.status(201).json({ message: "User updated successfully." });
       });
     };
-
-    if (dataIsFullyUpdated) {
-      if (nip_nim || start_contract || end_contract) {
-        return res.status(400).json({
-          message:
-            "nip_nim, start_contract, and end_contract cannot be updated.",
-        });
-      }
-
-      const fields = [];
-      const values = [];
-
-      if (phone_number) {
-        fields.push("phone_number");
-        values.push(phone_number);
-      }
-
-      if (address) {
-        fields.push("address");
-        values.push(address);
-      }
-
-      if (profile_photo) {
-        fields.push("profile_photo");
-        values.push(profile_photo);
-      }
-
-      if (fields.length === 0) {
-        return res.status(400).json({
-          message: "No fields to update.",
-        });
-      }
-
-      return updateUserQuery(fields, values);
-    }
 
     if (nip_nim && start_contract && end_contract) {
       const fields = [
@@ -376,6 +341,49 @@ const updateUser = (req, res) => {
           "All contract details (nip_nim, start_contract, end_contract) must be provided.",
       });
     }
+  });
+};
+
+const updateUser = (req, res) => {
+  const userId = parseInt(req.params.id);
+  const { phone_number, address } = req.body;
+
+  const profile_photo = req.file ? req.file.path : null;
+
+  const fields = [];
+  const values = [];
+
+  if (phone_number) {
+    fields.push("phone_number");
+    values.push(phone_number);
+  }
+
+  if (address) {
+    fields.push("address");
+    values.push(address);
+  }
+
+  if (profile_photo) {
+    fields.push("profile_photo");
+    values.push(profile_photo);
+  }
+
+  if (fields.length === 0) {
+    return res.status(400).json({
+      message: "No fields to update.",
+    });
+  }
+
+  const setClause = fields.map((f) => `${f} = ?`).join(", ");
+  const query = `UPDATE users SET ${setClause} WHERE userId = ?`;
+
+  db.query(query, [...values, userId], (err, result) => {
+    if (err) {
+      console.error("Error updating user self:", err);
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    res.status(200).json({ message: "Profile updated successfully." });
   });
 };
 
@@ -537,6 +545,7 @@ module.exports = {
   register,
   insertUser,
   updateUser,
+  updateUserbyAdmin,
   deleteUser,
   getAllUsers,
   getUserById,

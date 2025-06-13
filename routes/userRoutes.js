@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   updateUser,
+  updateUserbyAdmin,
   deleteUser,
   getAllUsers,
   getUserById,
@@ -10,8 +11,16 @@ const {
 
 const router = express.Router();
 const uploadProfile = require("../middleware/uploadProfile");
+const { verifyToken, checkRole } = require("../middleware/authMiddleWare");
 
 router.post("/register", register);
+router.put(
+  "/updatebymanagement/:id",
+  verifyToken,
+  checkRole(["Management"]),
+  uploadProfile.single("profile_photo"),
+  updateUserbyAdmin
+);
 router.put("/:id", uploadProfile.single("profile_photo"), updateUser);
 router.delete("/:id", deleteUser);
 router.get("/get", getAllUsers);
