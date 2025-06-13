@@ -259,7 +259,7 @@ const getAttendanceOverview = (req, res) => {
           return `${hh}:${mi}`;
         };
 
-        const row = dailyResult[0];
+        const row = dailyResult[0] || {};
 
         const overview = {
           total_attendance: accumulatedResult[0].total_attendance || 0,
