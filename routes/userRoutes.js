@@ -15,9 +15,9 @@ const { verifyToken, checkRole } = require("../middleware/authMiddleWare");
 
 router.post("/register", register);
 router.put(
-  "/updatebymanagement/:id",
+  "/updatebyadmin/:id",
   verifyToken,
-  checkRole(["Management"]),
+  checkRole(["Admin"]),
   uploadProfile.single("profile_photo"),
   updateUserbyAdmin
 );
