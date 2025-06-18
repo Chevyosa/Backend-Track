@@ -401,6 +401,27 @@ const deleteUser = (req, res) => {
   });
 };
 
+const softDeleteUser = (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ message: "Invalid userId provided" });
+  }
+
+  const query = "UPDATE users SET is_deleted = TRUE WHERE userId = ?";
+  db.query(query, [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User soft-deleted successfully" });
+  });
+};
+
 const getAllUsers = (req, res) => {
   const queryGetAllUsers = "SELECT * FROM users";
   db.query(queryGetAllUsers, (err, result) => {
@@ -550,4 +571,5 @@ module.exports = {
   getAllUsers,
   getUserById,
   getAttendanceByUserId,
+  softDeleteUser,
 };
