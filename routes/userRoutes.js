@@ -7,6 +7,7 @@ const {
   getUserById,
   register,
   getAttendanceByUserId,
+  softDeleteUser,
 } = require("../Controllers/user_Controller");
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.put(
 );
 router.put("/:id", uploadProfile.single("profile_photo"), updateUser);
 router.delete("/:id", deleteUser);
+router.delete("/softdelete/:id", softDeleteUser);
 router.get("/get", getAllUsers);
 router.get("/get/:id", getUserById);
 router.get("/attendance/:id", getAttendanceByUserId);
