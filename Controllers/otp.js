@@ -1,5 +1,5 @@
 const speakeasy = require("speakeasy");
-const sendOTP = require("../utils/nodeMailer");
+const { sendOTP } = require("../utils/nodeMailer");
 const { otpVerifiedCache } = require("../utils/cache.js");
 const { infinite_track_connection: db } = require("../dbconfig.js");
 
