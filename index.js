@@ -34,8 +34,11 @@ app.use("/users", userRoutes);
 app.use("/divisions", divisionRoutes);
 app.use("/leave", leaveRoutes);
 app.use("/contacts", contactRoutes);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/all-attendance", allAttendanceRoutes);
+app.get("/", function (req, res) {
+  res.send("Successfully Connected to Dev API");
+});
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running at http://localhost:${port}`);
