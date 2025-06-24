@@ -422,6 +422,45 @@ const softDeleteUser = (req, res) => {
   });
 };
 
+const reactivateUser = (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  const queryCheckUser = `
+    SELECT * FROM users 
+    WHERE userId = ? AND is_deleted = 1
+  `;
+
+  db.query(queryCheckUser, [userId], (err, result) => {
+    if (err) {
+      console.error("Database error:", err.message);
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (result.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "User not found or already active" });
+    }
+
+    const queryReactivate = `
+      UPDATE users 
+      SET is_deleted = 0 WHERE userId = ?
+    `;
+
+    db.query(queryReactivate, [userId], (err, updateResult) => {
+      if (err) {
+        console.error("Error during reactivation:", err.message);
+        return res.status(500).json({ message: "Failed to reactivate user" });
+      }
+
+      res.status(200).json({
+        message: "User account has been reactivated successfully",
+        userId,
+      });
+    });
+  });
+};
+
 const getAllUsers = (req, res) => {
   const queryGetAllUsers = "SELECT * FROM users";
   db.query(queryGetAllUsers, (err, result) => {
@@ -572,4 +611,5 @@ module.exports = {
   getUserById,
   getAttendanceByUserId,
   softDeleteUser,
+  reactivateUser,
 };
