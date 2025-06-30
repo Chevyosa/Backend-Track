@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { infinite_track_connection: db } = require("../dbconfig.js");
+const { sendAccountReactivation } = require("../utils/nodeMailer.js");
 
 const queryAsync = (query, values) => {
   return new Promise((resolve, reject) => {
@@ -422,6 +423,56 @@ const softDeleteUser = (req, res) => {
   });
 };
 
+const reactivateUser = (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  const queryCheckUser = `
+    SELECT * FROM users 
+    WHERE userId = ? AND is_deleted = 1
+  `;
+
+  db.query(queryCheckUser, [userId], (err, result) => {
+    if (err) {
+      console.error("Database error:", err.message);
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (result.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "User not found or already active" });
+    }
+
+    const userEmail = result[0].email;
+
+    const queryReactivate = `
+      UPDATE users 
+      SET is_deleted = 0 WHERE userId = ?
+    `;
+
+    db.query(queryReactivate, [userId], async (err, updateResult) => {
+      if (err) {
+        console.error("Error during reactivation:", err.message);
+        return res.status(500).json({ message: "Failed to reactivate user" });
+      }
+
+      try {
+        await sendAccountReactivation(userEmail);
+        res.status(200).json({
+          message: "User account has been reactivated and email sent!",
+          userId,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send reactivation email:", emailErr.message);
+        res.status(200).json({
+          message: "User reactivated successfully, but failed to send email.",
+          userId,
+        });
+      }
+    });
+  });
+};
+
 const getAllUsers = (req, res) => {
   const queryGetAllUsers = "SELECT * FROM users";
   db.query(queryGetAllUsers, (err, result) => {
@@ -572,4 +623,5 @@ module.exports = {
   getUserById,
   getAttendanceByUserId,
   softDeleteUser,
+  reactivateUser,
 };

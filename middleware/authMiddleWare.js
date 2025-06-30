@@ -23,6 +23,13 @@ const verifyToken = (req, res, next) => {
         return res.status(400).json({ message: "Role not found" });
       }
 
+      if (result.length === 0 && result[0].is_deleted === 1) {
+        return res.status(403).json({
+          message:
+            "Your Account Doesn't Have Authority to Access. Either This Account Has Been Deactivated",
+        });
+      }
+
       req.user.roleName = result[0].role;
 
       next();

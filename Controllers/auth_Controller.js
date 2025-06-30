@@ -17,6 +17,14 @@ const loginUser = async (req, res) => {
     }
 
     const user = result[0];
+
+    if (user.is_deleted === 1) {
+      return res.status(403).json({
+        messsage:
+          "This Account has been Deactivated. Please Contact Administrator",
+      });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(400).json({ message: "Invalid password" });
