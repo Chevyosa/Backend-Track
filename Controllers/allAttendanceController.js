@@ -72,7 +72,7 @@ const filteredFastestAttendance = (req, res) => {
 
       if (results.length === 0) {
         return res
-          .status(404)
+          .status(204)
           .json({ message: "No attendance found for this role" });
       }
 
@@ -158,7 +158,7 @@ const filteredLatesAttendance = (req, res) => {
 
     if (total < 6) {
       return res
-        .status(404)
+        .status(204)
         .json({ message: "Not enough attendance data for this role" });
     }
 
