@@ -7,6 +7,7 @@ const {
   getUserById,
   register,
   getAttendanceByUserId,
+  getDeactivatedUsers,
   softDeleteUser,
   reactivateUser,
 } = require("../Controllers/user_Controller");
@@ -33,6 +34,7 @@ router.patch(
   reactivateUser
 );
 router.get("/get", getAllUsers);
+router.get("/get-deactivated", getDeactivatedUsers);
 router.get("/get/:id", getUserById);
 router.get("/attendance/:id", getAttendanceByUserId);
 

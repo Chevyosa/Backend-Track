@@ -473,6 +473,19 @@ const reactivateUser = (req, res) => {
   });
 };
 
+const getDeactivatedUsers = (req, res) => {
+  const queryGetDeactivatedUsers = "SELECT * FROM users WHERE is_deleted = 1";
+  db.query(queryGetDeactivatedUsers, (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database Error", error: err });
+    }
+    if (result.length === 0) {
+      return res.status(204).json({ message: "No Deactivated Users" });
+    }
+    res.json(result);
+  });
+};
+
 const getAllUsers = (req, res) => {
   const queryGetAllUsers = "SELECT * FROM users";
   db.query(queryGetAllUsers, (err, result) => {
@@ -622,6 +635,7 @@ module.exports = {
   getAllUsers,
   getUserById,
   getAttendanceByUserId,
+  getDeactivatedUsers,
   softDeleteUser,
   reactivateUser,
 };
