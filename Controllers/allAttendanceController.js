@@ -9,6 +9,59 @@ const formatTimeOnly = (datetime) => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
+const getTotalAttendance = (req, res) => {
+  const query = `SELECT attendanceId FROM attendance ORDER BY attendanceId ASC`;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching attendance for all users:", err.message);
+      return res
+        .status(500)
+        .json({ message: "Failed to fetch all attendance" });
+    }
+
+    res.status(200).json({
+      results,
+    });
+  });
+};
+
+const getTodaysAttendance = (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        users.name,
+        users.profile_photo,
+        attendance.check_in_time
+      FROM attendance
+      JOIN users ON attendance.userId = users.userId
+      WHERE attendance.attendance_date = CURDATE()
+      ORDER BY attendance.check_in_time ASC
+    `;
+
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error("Database error:", err.message);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      if (results.length === 0) {
+        return res.status(204).json({ message: "No Attendance Found" });
+      }
+
+      const formatted = results.map((item) => ({
+        ...item,
+        check_in_time: formatTimeOnly(item.check_in_time),
+      }));
+
+      res.status(200).json(formatted);
+    });
+  } catch (err) {
+    console.error("Error Fetching All Attendance:", err.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // FASTEST Attendance
 const getFastestAttendance = (req, res) => {
   try {
@@ -193,6 +246,8 @@ const filteredLatesAttendance = (req, res) => {
 };
 
 module.exports = {
+  getTotalAttendance,
+  getTodaysAttendance,
   getFastestAttendance,
   getLatestAttendance,
   filteredFastestAttendance,
