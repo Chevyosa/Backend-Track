@@ -5,12 +5,21 @@ const formatTimeOnly = (datetime) => {
   const date = new Date(datetime);
   const hours = `${date.getHours()}`.padStart(2, "0");
   const minutes = `${date.getMinutes()}`.padStart(2, "0");
-  const seconds = `${date.getSeconds()}`.padStart(2, "0");
-  return `${hours}:${minutes}:${seconds}`;
+  return `${hours}:${minutes}`;
 };
 
 const getTotalAttendance = (req, res) => {
-  const query = `SELECT attendanceId FROM attendance ORDER BY attendanceId ASC`;
+  const query = `
+    SELECT 
+      users.name,
+      users.profile_photo,
+      DATE_FORMAT(attendance.check_in_time, '%d %M %Y') AS check_in_date,
+      DATE_FORMAT(attendance.check_in_time, '%H:%i') AS check_in_time,
+      DATE_FORMAT(attendance.check_out_time, '%H:%i') AS check_out_time 
+    FROM attendance
+    JOIN users ON attendance.userId = users.userId
+    ORDER BY attendanceId DESC
+  `;
 
   db.query(query, (err, results) => {
     if (err) {
@@ -19,10 +28,11 @@ const getTotalAttendance = (req, res) => {
         .status(500)
         .json({ message: "Failed to fetch all attendance" });
     }
+    if (results.length === 0) {
+      res.status(204).json({ message: "No Attendance Recorded" });
+    }
 
-    res.status(200).json({
-      results,
-    });
+    res.status(200).json(results);
   });
 };
 
