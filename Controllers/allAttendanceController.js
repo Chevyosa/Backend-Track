@@ -95,7 +95,7 @@ const getFastestAttendance = (req, res) => {
       }
 
       if (results.length === 0) {
-        return res.status(400).json({ message: "No attendance found" });
+        return res.status(204).json({ message: "No attendance found" });
       }
 
       const formatted = results.map((item) => ({
@@ -169,7 +169,7 @@ const getLatestAttendance = (req, res) => {
     const total = countResult[0].total;
 
     if (total < 6) {
-      return res.status(400).json({ message: "No attendance found" });
+      return res.status(204).json({ message: "No attendance found" });
     }
 
     const query = `
