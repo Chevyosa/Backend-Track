@@ -13,6 +13,7 @@ const getTotalAttendance = (req, res) => {
     SELECT 
       users.name,
       users.profile_photo,
+      attendance.notes,
       DATE_FORMAT(attendance.check_in_time, '%d %M %Y') AS check_in_date,
       DATE_FORMAT(attendance.check_in_time, '%H:%i') AS check_in_time,
       DATE_FORMAT(attendance.check_out_time, '%H:%i') AS check_out_time 
