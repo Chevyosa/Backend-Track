@@ -30,7 +30,7 @@ const getTotalAttendance = (req, res) => {
         .json({ message: "Failed to fetch all attendance" });
     }
     if (results.length === 0) {
-      res.status(204).json({ message: "No Attendance Recorded" });
+      res.status(200).json({ message: "No Attendance Recorded" });
     }
 
     res.status(200).json(results);
@@ -57,7 +57,7 @@ const getTodaysAttendance = (req, res) => {
       }
 
       if (results.length === 0) {
-        return res.status(204).json({ message: "No Attendance Found" });
+        return res.status(200).json({ message: "No Attendance Found" });
       }
 
       const formatted = results.map((item) => ({
@@ -95,7 +95,7 @@ const getFastestAttendance = (req, res) => {
       }
 
       if (results.length === 0) {
-        return res.status(204).json({ message: "No attendance found" });
+        return res.status(200).json({ message: "No attendance found" });
       }
 
       const formatted = results.map((item) => ({
@@ -136,7 +136,7 @@ const filteredFastestAttendance = (req, res) => {
 
       if (results.length === 0) {
         return res
-          .status(204)
+          .status(200)
           .json({ message: "No attendance found for this role" });
       }
 
@@ -169,7 +169,7 @@ const getLatestAttendance = (req, res) => {
     const total = countResult[0].total;
 
     if (total < 6) {
-      return res.status(204).json({ message: "No attendance found" });
+      return res.status(200).json({ message: "No attendance found" });
     }
 
     const query = `
@@ -222,7 +222,7 @@ const filteredLatesAttendance = (req, res) => {
 
     if (total < 6) {
       return res
-        .status(204)
+        .status(200)
         .json({ message: "Not enough attendance data for this role" });
     }
 
