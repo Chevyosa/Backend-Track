@@ -37,6 +37,37 @@ const getTotalAttendance = (req, res) => {
   });
 };
 
+const getMonthlyAttendance = (req, res) => {
+  const query = `
+    SELECT 
+      users.name,
+      users.profile_photo,
+      attendance.notes,
+      DATE_FORMAT(attendance.check_in_time, '%d %M %Y') AS check_in_date,
+      DATE_FORMAT(attendance.check_in_time, '%H:%i') AS check_in_time,
+      DATE_FORMAT(attendance.check_out_time, '%H:%i') AS check_out_time 
+    FROM attendance
+    JOIN users ON attendance.userId = users.userId
+    WHERE MONTH(attendance.check_in_time) = MONTH(CURRENT_DATE())
+      AND YEAR(attendance.check_in_time) = YEAR(CURRENT_DATE())
+    ORDER BY attendanceId DESC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching attendance for all users:", err.message);
+      return res
+        .status(500)
+        .json({ message: "Failed to fetch all attendance" });
+    }
+    if (results.length === 0) {
+      res.status(200).json({ message: "No Attendance Recorded" });
+    }
+
+    res.status(200).json(results);
+  });
+};
+
 const getTodaysAttendance = (req, res) => {
   try {
     const query = `
@@ -258,6 +289,7 @@ const filteredLatesAttendance = (req, res) => {
 
 module.exports = {
   getTotalAttendance,
+  getMonthlyAttendance,
   getTodaysAttendance,
   getFastestAttendance,
   getLatestAttendance,
