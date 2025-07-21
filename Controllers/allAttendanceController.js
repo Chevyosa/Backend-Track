@@ -14,11 +14,14 @@ const getTotalAttendance = (req, res) => {
       users.name,
       users.profile_photo,
       attendance.notes,
+      attendance.attendance_category_id,
+      attendance_category.attendance_category,
       DATE_FORMAT(attendance.check_in_time, '%d %M %Y') AS check_in_date,
       DATE_FORMAT(attendance.check_in_time, '%H:%i') AS check_in_time,
       DATE_FORMAT(attendance.check_out_time, '%H:%i') AS check_out_time 
     FROM attendance
     JOIN users ON attendance.userId = users.userId
+    JOIN attendance_category ON attendance.attendance_category_id = attendance_category.attendance_category_id
     ORDER BY attendanceId DESC
   `;
 
