@@ -487,7 +487,18 @@ const getDeactivatedUsers = (req, res) => {
 };
 
 const getAllUsers = (req, res) => {
-  const queryGetAllUsers = "SELECT * FROM users";
+  const queryGetAllUsers = `
+    SELECT 
+      users.*,
+      divisions.division,
+      positions.positionName,
+      roles.role
+    FROM users
+    LEFT JOIN divisions ON users.divisionId = divisions.divisionId
+    LEFT JOIN positions ON users.positionId = positions.positionId
+    LEFT JOIN roles ON users.roleId = roles.roleId
+  `;
+
   db.query(queryGetAllUsers, (err, result) => {
     if (err) {
       return res.status(500).json({ message: "Database error", error: err });
