@@ -176,7 +176,7 @@ const insertUser = async (
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const userInsertResult = await queryAsync(
-      "INSERT INTO users (name, email, password, roleId, divisionId, positionId) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO users (name, email, password, roleId, divisionId, positionId, is_deleted) VALUES (?, ?, ?, ?, ?, ?, 0)",
       [name, email, hashedPassword, roleId, divisionId, positionId]
     );
 
