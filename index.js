@@ -18,6 +18,7 @@ const userRoutes = require("./routes/userRoutes.js");
 const leaveRoutes = require("./routes/leaveRoutes.js");
 const divisionRoutes = require("./routes/divisionRoutes.js");
 const contactRoutes = require("./routes/contactRoutes.js");
+const managemenRoutes = require("./routes/managementRoutes.js");
 
 const app = express();
 const port = 3000;
@@ -32,6 +33,7 @@ app.use("/head-program", headProgramRoutes);
 app.use("/otp", otpRoutes);
 app.use("/users", userRoutes);
 app.use("/divisions", divisionRoutes);
+app.use("/management", managemenRoutes);
 app.use("/leave", leaveRoutes);
 app.use("/contacts", contactRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
