@@ -114,9 +114,11 @@ const getFastestAttendance = (req, res) => {
       SELECT 
         users.name,
         users.profile_photo,
-        attendance.check_in_time
+        attendance.check_in_time,
+        attendance_category.attendance_category
       FROM attendance
       JOIN users ON attendance.userId = users.userId
+      JOIN attendance_category ON attendance.attendance_category_id = attendance_category.attendance_category_id
       WHERE attendance.attendance_date = CURDATE()
       ORDER BY attendance.check_in_time ASC
       LIMIT 3
@@ -210,9 +212,11 @@ const getLatestAttendance = (req, res) => {
       SELECT 
         users.name,
         users.profile_photo,
-        attendance.check_in_time
+        attendance.check_in_time,
+        attendance_category.attendance_category
       FROM attendance
       JOIN users ON attendance.userId = users.userId
+      JOIN attendance_category ON attendance.attendance_category_id = attendance_category.attendance_category_id
       WHERE attendance.attendance_date = CURDATE()
       ORDER BY attendance.check_in_time DESC
       LIMIT 3
