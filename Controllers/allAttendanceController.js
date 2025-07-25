@@ -13,6 +13,7 @@ const getTotalAttendance = (req, res) => {
     SELECT 
       users.name,
       users.profile_photo,
+      roles.role AS user_role, -- ambil nama rolenya
       attendance.notes,
       attendance.attendance_category_id,
       attendance_category.attendance_category,
@@ -21,6 +22,7 @@ const getTotalAttendance = (req, res) => {
       DATE_FORMAT(attendance.check_out_time, '%H:%i') AS check_out_time 
     FROM attendance
     JOIN users ON attendance.userId = users.userId
+    JOIN roles ON users.roleId = roles.roleId -- join ke roles
     JOIN attendance_category ON attendance.attendance_category_id = attendance_category.attendance_category_id
     ORDER BY attendanceId DESC
   `;
