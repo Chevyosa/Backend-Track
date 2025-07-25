@@ -30,7 +30,7 @@ router.delete("/softdelete/:id", softDeleteUser);
 router.patch(
   "/reactivate/:id",
   verifyToken,
-  checkRole(["Management"]),
+  checkRole(["Admin"]),
   reactivateUser
 );
 router.get("/get", getAllUsers);
