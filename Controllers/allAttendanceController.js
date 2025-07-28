@@ -16,6 +16,7 @@ const getTotalAttendance = (req, res) => {
       roles.role AS user_role, -- ambil nama rolenya
       attendance.notes,
       attendance.attendance_category_id,
+      attendance.upload_image,
       attendance_category.attendance_category,
       DATE_FORMAT(attendance.check_in_time, '%d %M %Y') AS check_in_date,
       DATE_FORMAT(attendance.check_in_time, '%H:%i') AS check_in_time,
