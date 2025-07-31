@@ -155,8 +155,8 @@ const handleAttendance = (req, res) => {
           : `Check-out: ${notes}`;
 
         db.query(
-          "UPDATE attendance SET check_out_time = NOW(), notes = ? WHERE attendanceId = ?",
-          [updatedNotes, attendanceId],
+          "UPDATE attendance SET check_out_time = ?, notes = ? WHERE attendanceId = ?",
+          [realCheckInTime, updatedNotes, attendanceId],
           (err, updateResult) => {
             if (err) {
               console.error("Error during check-out:", err.message);
