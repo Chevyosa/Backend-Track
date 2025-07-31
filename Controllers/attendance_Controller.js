@@ -29,6 +29,12 @@ const handleAttendance = (req, res) => {
   const randomSecond = Math.floor(Math.random() * 60); // Acak detik antara 0-59
   now.setHours(8, randomMinute, randomSecond, 0);
 
+  const nowUTC = new Date();
+  const offsetInMillis = 7 * 60 * 60 * 1000;
+  const nowLocal = new Date(nowUTC.getTime() + offsetInMillis);
+
+  const realCheckInTime = nowLocal.toISOString().slice(0, 19).replace("T", " ");
+
   console.log(
     "File path (upload_image):",
     req.file ? req.file.path : "No file"
@@ -63,8 +69,9 @@ const handleAttendance = (req, res) => {
 
     attendance_status_id = currentHour < 9 ? 1 : 2;
     db.query(
-      "INSERT INTO attendance (check_in_time, fake_check_in_time, check_out_time, userId, attendance_category_id, attendance_status_id, attendance_date, latitude, longitude, upload_image, notes) VALUES (NOW(), ?, NULL, ?, ?, ?, CURDATE(), ?, ?, ?, ?)",
+      "INSERT INTO attendance (check_in_time, fake_check_in_time, check_out_time, userId, attendance_category_id, attendance_status_id, attendance_date, latitude, longitude, upload_image, notes) VALUES (?, ?, NULL, ?, ?, ?, CURDATE(), ?, ?, ?, ?)",
       [
+        realCheckInTime,
         now,
         userId,
         attendance_category_id,
