@@ -1,4 +1,6 @@
 const { infinite_track_connection: db } = require("../dbconfig.js");
+const getSheetsClient = require("../utils/googleSheets.js");
+require("dotenv").config();
 
 // Format waktu saja (tanpa tanggal)
 const formatTimeOnly = (datetime) => {
@@ -13,7 +15,7 @@ const getTotalAttendance = (req, res) => {
     SELECT 
       users.name,
       users.profile_photo,
-      roles.role AS user_role, -- ambil nama rolenya
+      roles.role AS user_role,
       attendance.notes,
       attendance.attendance_category_id,
       attendance.upload_image,
@@ -297,7 +299,125 @@ const filteredLatesAttendance = (req, res) => {
   });
 };
 
+const exportSheet = async (req, res) => {
+  try {
+    const { start, end } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end date required" });
+    }
+
+    const query = `
+    SELECT 
+      users.name,
+      roles.role AS user_role,
+      attendance_category.attendance_category,
+      DATE_FORMAT(attendance.check_in_time, '%d %M %Y') AS check_in_date,
+      DATE_FORMAT(attendance.fake_check_in_time, '%H:%i') AS check_in_time,
+      DATE_FORMAT(attendance.check_out_time, '%H:%i') AS check_out_time,
+      attendance.notes
+    FROM attendance
+    JOIN users ON attendance.userId = users.userId
+    JOIN roles ON users.roleId = roles.roleId
+    JOIN attendance_category ON attendance.attendance_category_id = attendance_category.attendance_category_id
+    WHERE attendance.attendance_date BETWEEN ? AND ?
+    ORDER BY attendanceId DESC
+  `;
+
+    const [rows] = await db.execute(query, [start, end]);
+
+    if (!rows.length) {
+      return res.status(404).json({ message: "No data to export" });
+    }
+
+    const sheets = await getSheetsClient();
+
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const dateStart = new Date(start);
+    const month = monthNames[dateStart.getMonth()];
+    const year = dateStart.getFullYear();
+
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const metadata = await sheets.spreadsheets.get({ spreadsheetId });
+    const existingSheets = metadata.data.sheets.map((s) => s.properties.title);
+
+    const baseTitle = `Export_${year}_${month}`;
+    const matchingSheets = existingSheets.filter((title) =>
+      title.startsWith(baseTitle)
+    );
+
+    const nextIndex = matchingSheets.length + 1;
+    const paddedIndex = String(nextIndex).padStart(3, "0");
+
+    const newSheetTitle = `${baseTitle}_${paddedIndex}`;
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: newSheetTitle,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const rawHeader = Object.keys(rows[0]);
+
+    const headerMap = {
+      name: "Name",
+      user_role: "Role",
+      attendance_category: "Attendance Category",
+      check_in_date: "Check-in Date",
+      check_in_time: "Check-in Time",
+      check_out_time: "Check-out Time",
+      notes: "Notes",
+    };
+
+    const header = rawHeader.map((col) => headerMap[col] || col);
+    const data = rows.map((row) => Object.values(row));
+    const finalData = [header, ...data];
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${newSheetTitle}!A1`,
+      valueInputOption: "RAW",
+      resource: {
+        values: finalData,
+      },
+    });
+
+    res.json({
+      message: "Export successful",
+      sheetName: newSheetTitle,
+      link: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=0`,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Export failed" });
+  }
+};
+
 module.exports = {
+  exportSheet,
   getTotalAttendance,
   getMonthlyAttendance,
   getTodaysAttendance,

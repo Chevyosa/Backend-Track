@@ -7,6 +7,7 @@ const {
   getLatestAttendance,
   filteredFastestAttendance,
   filteredLatesAttendance,
+  exportSheet,
 } = require("../Controllers/allAttendanceController");
 const { verifyToken } = require("../middleware/authMiddleWare");
 
@@ -19,5 +20,6 @@ router.get("/fastest", getFastestAttendance);
 router.get("/filtered-fastest", verifyToken, filteredFastestAttendance);
 router.get("/filtered-latest", verifyToken, filteredLatesAttendance);
 router.get("/latest", getLatestAttendance);
+router.get("/export-to-sheet", exportSheet);
 
 module.exports = router;
