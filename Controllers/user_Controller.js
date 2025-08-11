@@ -1,11 +1,11 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 const { sendAccountReactivation } = require("../utils/nodeMailer.js");
 
 const queryAsync = (query, values) => {
   return new Promise((resolve, reject) => {
-    db.query(query, values, (err, result) => {
+    dbCallback.query(query, values, (err, result) => {
       if (err) reject(err);
       else resolve(result);
     });
@@ -244,7 +244,7 @@ const updateUserbyAdmin = (req, res) => {
     WHERE userId = ?
   `;
 
-  db.query(queryGetUser, [userId], (err, userResult) => {
+  dbCallback.query(queryGetUser, [userId], (err, userResult) => {
     if (err) {
       console.error("Database error while fetching user:", err);
       return res.status(500).json({ message: "Database error", error: err });
@@ -260,7 +260,7 @@ const updateUserbyAdmin = (req, res) => {
       const setClause = fields.map((field) => `${field} = ?`).join(", ");
       const query = `UPDATE users SET ${setClause} WHERE userId = ?`;
 
-      db.query(query, [...values, userId], (err, result) => {
+      dbCallback.query(query, [...values, userId], (err, result) => {
         if (err) {
           console.error("Database error while updating user:", err);
           return res
@@ -292,7 +292,7 @@ const updateUserbyAdmin = (req, res) => {
         values.push(profile_photo);
       }
 
-      db.query(
+      dbCallback.query(
         `UPDATE users SET ${fields
           .map((f) => `${f} = ?`)
           .join(", ")} WHERE userId = ?`,
@@ -315,7 +315,7 @@ const updateUserbyAdmin = (req, res) => {
             (end.getMonth() - start.getMonth());
           const annual_balance = Math.max(0, monthsDifference);
 
-          db.query(
+          dbCallback.query(
             `UPDATE leave_balance SET annual_balance = ? WHERE userId = ?`,
             [annual_balance, userId],
             (err) => {
@@ -378,7 +378,7 @@ const updateUser = (req, res) => {
   const setClause = fields.map((f) => `${f} = ?`).join(", ");
   const query = `UPDATE users SET ${setClause} WHERE userId = ?`;
 
-  db.query(query, [...values, userId], (err, result) => {
+  dbCallback.query(query, [...values, userId], (err, result) => {
     if (err) {
       console.error("Error updating user self:", err);
       return res.status(500).json({ message: "Database error", error: err });
@@ -392,7 +392,7 @@ const deleteUser = (req, res) => {
   const userId = parseInt(req.params.id);
 
   const queryDeleteUser = "DELETE FROM users WHERE userId = ?";
-  db.query(queryDeleteUser, [userId], (err, result) => {
+  dbCallback.query(queryDeleteUser, [userId], (err, result) => {
     if (err)
       return res.status(500).json({ message: "Database error", error: err });
     if (result.affectedRows === 0) {
@@ -410,7 +410,7 @@ const softDeleteUser = (req, res) => {
   }
 
   const query = "UPDATE users SET is_deleted = TRUE WHERE userId = ?";
-  db.query(query, [userId], (err, result) => {
+  dbCallback.query(query, [userId], (err, result) => {
     if (err) {
       return res.status(500).json({ message: "Database error", error: err });
     }
@@ -431,7 +431,7 @@ const reactivateUser = (req, res) => {
     WHERE userId = ? AND is_deleted = 1
   `;
 
-  db.query(queryCheckUser, [userId], (err, result) => {
+  dbCallback.query(queryCheckUser, [userId], (err, result) => {
     if (err) {
       console.error("Database error:", err.message);
       return res.status(500).json({ message: "Database error", error: err });
@@ -450,7 +450,7 @@ const reactivateUser = (req, res) => {
       SET is_deleted = 0 WHERE userId = ?
     `;
 
-    db.query(queryReactivate, [userId], async (err, updateResult) => {
+    dbCallback.query(queryReactivate, [userId], async (err, updateResult) => {
       if (err) {
         console.error("Error during reactivation:", err.message);
         return res.status(500).json({ message: "Failed to reactivate user" });
@@ -475,7 +475,7 @@ const reactivateUser = (req, res) => {
 
 const getDeactivatedUsers = (req, res) => {
   const queryGetDeactivatedUsers = "SELECT * FROM users WHERE is_deleted = 1";
-  db.query(queryGetDeactivatedUsers, (err, result) => {
+  dbCallback.query(queryGetDeactivatedUsers, (err, result) => {
     if (err) {
       return res.status(500).json({ message: "Database Error", error: err });
     }
@@ -499,7 +499,7 @@ const getAllUsers = (req, res) => {
     LEFT JOIN roles ON users.roleId = roles.roleId
   `;
 
-  db.query(queryGetAllUsers, (err, result) => {
+  dbCallback.query(queryGetAllUsers, (err, result) => {
     if (err) {
       return res.status(500).json({ message: "Database error", error: err });
     }
@@ -529,7 +529,7 @@ const getUserById = (req, res) => {
       users.userId = ?;
   `;
 
-  db.query(queryGetUserById, [id], (err, result) => {
+  dbCallback.query(queryGetUserById, [id], (err, result) => {
     if (err) {
       return res.status(500).json({ message: "Database error", error: err });
     }
@@ -577,7 +577,7 @@ const getAttendanceByUserId = (req, res) => {
       a.attendance_date DESC, a.check_in_time DESC;
   `;
 
-  db.query(queryGetAttendanceByUserId, [id], (err, result) => {
+  dbCallback.query(queryGetAttendanceByUserId, [id], (err, result) => {
     if (err) {
       console.error("Database error:", err.message);
       return res.status(500).json({ message: "Database error", error: err });

@@ -1,4 +1,4 @@
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 
 const getContacts = async (req, res) => {
   try {
@@ -21,7 +21,7 @@ const getContacts = async (req, res) => {
         u.phone_number IS NOT NULL
     `;
 
-    db.query(query, (err, results) => {
+    dbCallback.query(query, (err, results) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ message: "Database error" });

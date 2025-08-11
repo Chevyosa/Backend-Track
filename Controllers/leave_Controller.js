@@ -1,10 +1,10 @@
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 const fs = require("fs");
 
 function getUserIdByName(name, callback) {
   const query = "SELECT userId FROM users WHERE name = ? LIMIT 1";
 
-  db.query(query, [name], (err, result) => {
+  dbCallback.query(query, [name], (err, result) => {
     if (err) {
       console.error("Error fetching userId:", err.message);
       return callback(err, null);
@@ -22,7 +22,7 @@ function getUserIdByName(name, callback) {
 function getProgramIdByProgramName(programName, callback) {
   const query = "SELECT programId FROM programs WHERE programName = ? LIMIT 1";
 
-  db.query(query, [programName], (err, result) => {
+  dbCallback.query(query, [programName], (err, result) => {
     if (err) {
       console.error("Error fetching programId:", err.message);
       return callback(err, null);
@@ -53,7 +53,7 @@ function getProgramAndHeadProgramIdByHeadProgramName(
      u.name = ?;
  `;
 
-  db.query(query, [headProgramName], (err, result) => {
+  dbCallback.query(query, [headProgramName], (err, result) => {
     if (err) {
       console.error(
         "Error fetching program and head program IDs:",
@@ -79,7 +79,7 @@ function getHeadProgramIdByProgramId(programId, callback) {
   const query =
     "SELECT headprogramId FROM head_program WHERE programId = ? LIMIT 1";
 
-  db.query(query, [programId], (err, result) => {
+  dbCallback.query(query, [programId], (err, result) => {
     if (err) {
       console.error("Error fetching headprogramId:", err.message);
       return callback(err, null);
@@ -97,7 +97,7 @@ function getHeadProgramIdByProgramId(programId, callback) {
 function getDivisionIdByDivision(division, callback) {
   const query = "SELECT divisionId FROM divisions WHERE division = ? LIMIT 1";
 
-  db.query(query, [division], (err, result) => {
+  dbCallback.query(query, [division], (err, result) => {
     if (err) {
       console.error("Error fetching divisionId:", err.message);
       return callback(err, null);
@@ -116,7 +116,7 @@ function getLeavetypeIdByLeaveType(leavetype, callback) {
   const query =
     "SELECT leavetypeId FROM leave_type WHERE leavetype = ? LIMIT 1";
 
-  db.query(query, [leavetype], (err, result) => {
+  dbCallback.query(query, [leavetype], (err, result) => {
     if (err) {
       console.error("Error fetching leavetypeId:", err.message);
       return callback(err, null);
@@ -139,7 +139,7 @@ function checkAnnualUsage(userId, callback) {
    LIMIT 1
  `;
 
-  db.query(query, [userId], (err, result) => {
+  dbCallback.query(query, [userId], (err, result) => {
     if (err) {
       console.error("Error fetching Leave Balance: ", err.message);
       return callback(err, null);
@@ -166,7 +166,7 @@ function updateAnnualUsed(userId, startDate, endDate, callback) {
 
   const query = `UPDATE leave_balance SET annual_used = annual_used + ? WHERE userId = ?`;
 
-  db.query(query, [diffDays, userId], (err, result) => {
+  dbCallback.query(query, [diffDays, userId], (err, result) => {
     if (err) {
       console.error("Error updating annual leave balance:", err.message);
       return callback(err);
@@ -371,7 +371,7 @@ function insertLeaveRequest(data, callback) {
   //   (userId, headprogramId, divisionId, start_date, end_date, leavetypeId, description, phone, address, upload_image, leavestatusId)
   //   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-  //   db.query(
+  //   dbCallback.query(
   //     query,
   //     [
   //       data.userId,
@@ -401,7 +401,7 @@ function insertLeaveRequest(data, callback) {
    (userId, headprogramId, divisionId, start_date, end_date, leavetypeId, description, phone, address, upload_image, leavestatusId)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-  db.query(
+  dbCallback.query(
     query,
     [
       data.userId,
@@ -435,7 +435,7 @@ function getAllLeaveUsers(req, res) {
    JOIN divisions d ON u.divisionId = d.divisionId
  `;
 
-  db.query(query, (err, result) => {
+  dbCallback.query(query, (err, result) => {
     if (err) {
       console.error("Error fetching leave users data:", err.message);
       return res
@@ -514,7 +514,7 @@ function approveByHeadProgram(req, res) {
      WHERE leaveId = ? AND leavestatusId = 1
    `;
 
-    db.query(query, [leaveId], (err, result) => {
+    dbCallback.query(query, [leaveId], (err, result) => {
       if (err) {
         console.error("Error approving by HeadProgram:", err.message);
         return res
@@ -541,7 +541,7 @@ function approveByHeadProgram(req, res) {
      WHERE leaveId = ? AND leavestatusId = 1
    `;
 
-    db.query(query, [leaveId], (err, result) => {
+    dbCallback.query(query, [leaveId], (err, result) => {
       if (err) {
         console.error("Error declining by HeadProgram:", err.message);
         return res
@@ -579,7 +579,7 @@ function approveByOperational(req, res) {
      WHERE leaveId = ? AND leavestatusId = 2
    `;
 
-    db.query(query, [leaveId], (err, result) => {
+    dbCallback.query(query, [leaveId], (err, result) => {
       if (err) {
         console.error("Error approving by Operational:", err.message);
         return res
@@ -605,7 +605,7 @@ function approveByOperational(req, res) {
      WHERE leaveId = ? AND leavestatusId = 2
    `;
 
-    db.query(query, [leaveId], (err, result) => {
+    dbCallback.query(query, [leaveId], (err, result) => {
       if (err) {
         console.error("Error declining by Operational:", err.message);
         return res
@@ -641,7 +641,7 @@ function approveByProgramDirector(req, res) {
      WHERE leaveId = ? AND leavestatusId = 3
    `;
 
-    db.query(query, [leaveId], (err, result) => {
+    dbCallback.query(query, [leaveId], (err, result) => {
       if (err) {
         console.error("Error approving by Program Director:", err.message);
         return res
@@ -666,7 +666,7 @@ function approveByProgramDirector(req, res) {
      WHERE leaveId = ? AND leavestatusId = 3
    `;
 
-    db.query(query, [leaveId], (err, result) => {
+    dbCallback.query(query, [leaveId], (err, result) => {
       if (err) {
         console.error("Error declining by Program Director:", err.message);
         return res
@@ -726,7 +726,7 @@ function getAssignedLeaveRequests(req, res) {
    WHERE lu.leavestatusId = ?
  `;
 
-  db.query(query, [statusId], (err, results) => {
+  dbCallback.query(query, [statusId], (err, results) => {
     if (err) {
       console.error("Error fetching assigned leave requests:", err.message);
       return res
@@ -783,7 +783,7 @@ function getDeclinedLeaveRequests(req, res) {
    WHERE lu.leavestatusId = ?
  `;
 
-  db.query(query, [statusId], (err, results) => {
+  dbCallback.query(query, [statusId], (err, results) => {
     if (err) {
       console.error("Error fetching declined leave requests:", err.message);
       return res
@@ -848,7 +848,7 @@ function getApprovedLeaveRequests(req, res) {
    WHERE lu.leavestatusId = ?
  `;
 
-  db.query(query, [statusId], (err, results) => {
+  dbCallback.query(query, [statusId], (err, results) => {
     if (err) {
       console.error("Error fetching approved leave requests:", err.message);
       return res

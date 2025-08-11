@@ -1,9 +1,9 @@
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 
 const getAllDivisions = (req, res) => {
   const query = `SELECT division FROM divisions`;
 
-  db.query(query, (err, results) => {
+  dbCallback.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching divisions");
       return res.status(500).json({ message: "Failed to fetch divisions" });
@@ -20,7 +20,7 @@ const getAllDivisions = (req, res) => {
 const getAllPrograms = (req, res) => {
   const query = `SELECT programName FROM programs`;
 
-  db.query(query, (err, results) => {
+  dbCallback.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching programs");
       return res.status(500).json({ message: "Failed to fetch programs" });
@@ -37,7 +37,7 @@ const getAllPrograms = (req, res) => {
 const getAllRoles = (req, res) => {
   const query = `SELECT role FROM roles`;
 
-  db.query(query, (err, results) => {
+  dbCallback.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching roles");
       return res.status(500).json({ message: "Failed to fetch roles" });
@@ -54,7 +54,7 @@ const getAllRoles = (req, res) => {
 const getAllPositions = (req, res) => {
   const query = `SELECT positionName FROM positions`;
 
-  db.query(query, (err, results) => {
+  dbCallback.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching positions");
       return res.status(500).json({ message: "Failed to fetch positions" });

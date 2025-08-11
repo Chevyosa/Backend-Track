@@ -1,7 +1,7 @@
 const speakeasy = require("speakeasy");
 const { sendOTP } = require("../utils/nodeMailer");
 const { otpVerifiedCache } = require("../utils/cache.js");
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 
 const otpCache = {};
 
@@ -21,29 +21,33 @@ exports.sendOTP = (req, res) => {
     return res.status(400).json({ error: "Email is required" });
   }
 
-  db.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
-    if (err) {
-      console.error("Error checking user:", err.message);
-      return res.status(500).json({ message: "DB Error" });
+  dbCallback.query(
+    "SELECT * FROM users WHERE email = ?",
+    [email],
+    (err, results) => {
+      if (err) {
+        console.error("Error checking user:", err.message);
+        return res.status(500).json({ message: "DB Error" });
+      }
+
+      if (results.length === 0) {
+        return res.status(400).json({ message: "User not registered" });
+      }
+
+      const otp = generateOTP();
+      otpCache[email] = otp; // Menyimpan OTP yang dikirim
+
+      sendOTP(email, otp)
+        .then(() => {
+          console.log("OTP sent");
+          res.status(200).json({ message: "OTP sent to your email" });
+        })
+        .catch((error) => {
+          console.error("Error sending OTP:", error);
+          res.status(500).json({ message: "Failed to send OTP" });
+        });
     }
-
-    if (results.length === 0) {
-      return res.status(400).json({ message: "User not registered" });
-    }
-
-    const otp = generateOTP();
-    otpCache[email] = otp; // Menyimpan OTP yang dikirim
-
-    sendOTP(email, otp)
-      .then(() => {
-        console.log("OTP sent");
-        res.status(200).json({ message: "OTP sent to your email" });
-      })
-      .catch((error) => {
-        console.error("Error sending OTP:", error);
-        res.status(500).json({ message: "Failed to send OTP" });
-      });
-  });
+  );
 };
 
 exports.verifyOTP = (req, res) => {

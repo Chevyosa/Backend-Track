@@ -1,4 +1,4 @@
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback, dbPromise } = require("../dbconfig.js");
 const getSheetsClient = require("../utils/googleSheets.js");
 require("dotenv").config();
 
@@ -30,7 +30,7 @@ const getTotalAttendance = (req, res) => {
     ORDER BY attendanceId DESC
   `;
 
-  db.query(query, (err, results) => {
+  dbCallback.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching attendance for all users:", err.message);
       return res
@@ -61,7 +61,7 @@ const getMonthlyAttendance = (req, res) => {
     ORDER BY attendanceId DESC
   `;
 
-  db.query(query, (err, results) => {
+  dbCallback.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching attendance for all users:", err.message);
       return res
@@ -89,7 +89,7 @@ const getTodaysAttendance = (req, res) => {
       ORDER BY attendance.check_in_time ASC
     `;
 
-    db.query(query, (err, results) => {
+    dbCallback.query(query, (err, results) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ message: "Database error" });
@@ -129,7 +129,7 @@ const getFastestAttendance = (req, res) => {
       LIMIT 3
     `;
 
-    db.query(query, (err, results) => {
+    dbCallback.query(query, (err, results) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ message: "Database error" });
@@ -169,7 +169,7 @@ const filteredFastestAttendance = (req, res) => {
       LIMIT 3
     `;
 
-    db.query(query, [userRole], (err, results) => {
+    dbCallback.query(query, [userRole], (err, results) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ message: "Database error" });
@@ -201,7 +201,7 @@ const getLatestAttendance = (req, res) => {
     WHERE attendance_date = CURDATE()
   `;
 
-  db.query(countQuery, (err, countResult) => {
+  dbCallback.query(countQuery, (err, countResult) => {
     if (err) {
       console.error("Database error:", err.message);
       return res.status(500).json({ message: "Database error" });
@@ -227,7 +227,7 @@ const getLatestAttendance = (req, res) => {
       LIMIT 3
     `;
 
-    db.query(query, (err, results) => {
+    dbCallback.query(query, (err, results) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ message: "Database error" });
@@ -255,7 +255,7 @@ const filteredLatesAttendance = (req, res) => {
       AND roles.role = ?
   `;
 
-  db.query(countQuery, [userRole], (err, countResult) => {
+  dbCallback.query(countQuery, [userRole], (err, countResult) => {
     if (err) {
       console.error("Database error:", err.message);
       return res.status(500).json({ message: "Database error" });
@@ -283,7 +283,7 @@ const filteredLatesAttendance = (req, res) => {
       LIMIT 3
     `;
 
-    db.query(query, [userRole], (err, results) => {
+    dbCallback.query(query, [userRole], (err, results) => {
       if (err) {
         console.error("Database error:", err.message);
         return res.status(500).json({ message: "Database error" });
@@ -324,7 +324,7 @@ const exportSheet = async (req, res) => {
     ORDER BY attendanceId DESC
   `;
 
-    const [rows] = await db.execute(query, [start, end]);
+    const [rows] = await dbPromise.execute(query, [start, end]);
 
     if (!rows.length) {
       return res.status(404).json({ message: "No data to export" });

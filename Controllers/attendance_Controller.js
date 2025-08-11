@@ -1,4 +1,4 @@
-const { infinite_track_connection: db } = require("../dbconfig");
+const { dbCallback } = require("../dbconfig");
 const { haversineDistance } = require("../utils/geofence");
 const { verifyToken } = require("../middleware/authMiddleWare");
 
@@ -68,7 +68,7 @@ const handleAttendance = (req, res) => {
     }
 
     attendance_status_id = currentHour < 9 ? 1 : 2;
-    db.query(
+    dbCallback.query(
       "INSERT INTO attendance (check_in_time, fake_check_in_time, check_out_time, userId, attendance_category_id, attendance_status_id, attendance_date, latitude, longitude, upload_image, notes) VALUES (?, ?, NULL, ?, ?, ?, CURDATE(), ?, ?, ?, ?)",
       [
         realCheckInTime,
@@ -96,7 +96,7 @@ const handleAttendance = (req, res) => {
           WHERE a.attendanceId = ?
         `;
 
-        db.query(
+        dbCallback.query(
           queryAttendanceDetails,
           [attendanceId],
           (err, detailsResult) => {
@@ -126,7 +126,7 @@ const handleAttendance = (req, res) => {
       }
     );
   } else if (action === "checkout") {
-    db.query(
+    dbCallback.query(
       "SELECT attendanceId, attendance_status_id, notes FROM attendance WHERE userId = ? AND attendance_date = CURDATE() AND check_out_time IS NULL",
       [userId],
       (err, result) => {
@@ -154,7 +154,7 @@ const handleAttendance = (req, res) => {
           ? `Check-in: ${previousNotes}\nCheck-out: ${notes}`
           : `Check-out: ${notes}`;
 
-        db.query(
+        dbCallback.query(
           "UPDATE attendance SET check_out_time = ?, notes = ? WHERE attendanceId = ?",
           [realCheckInTime, updatedNotes, attendanceId],
           (err, updateResult) => {
@@ -177,23 +177,27 @@ const handleAttendance = (req, res) => {
             WHERE a.attendanceId = ?
           `;
 
-            db.query(queryStatus, [attendanceId], (err, statusResult) => {
-              if (err) {
-                console.error("Error retrieving status:", err.message);
-                return res
-                  .status(500)
-                  .json({ message: "Failed to retrieve attendance status" });
+            dbCallback.query(
+              queryStatus,
+              [attendanceId],
+              (err, statusResult) => {
+                if (err) {
+                  console.error("Error retrieving status:", err.message);
+                  return res
+                    .status(500)
+                    .json({ message: "Failed to retrieve attendance status" });
+                }
+
+                const attendance_status =
+                  statusResult[0]?.attendance_status || "";
+
+                res.status(200).json({
+                  message: "Check-out successful",
+                  attendanceId,
+                  attendance_status,
+                });
               }
-
-              const attendance_status =
-                statusResult[0]?.attendance_status || "";
-
-              res.status(200).json({
-                message: "Check-out successful",
-                attendanceId,
-                attendance_status,
-              });
-            });
+            );
           }
         );
       }
@@ -232,7 +236,7 @@ const getAttendanceOverview = (req, res) => {
     FROM attendance a
     WHERE a.userId = ? AND a.attendance_date = CURDATE() - INTERVAL 1 DAY`;
 
-  db.query(queryAccumulated, [userId], (err, accumulatedResult) => {
+  dbCallback.query(queryAccumulated, [userId], (err, accumulatedResult) => {
     if (err) {
       console.error("Error fetching accumulated attendance:", err.message);
       return res
@@ -240,57 +244,66 @@ const getAttendanceOverview = (req, res) => {
         .json({ message: "Failed to fetch attendance overview" });
     }
 
-    db.query(queryDaily, [userId, userId, userId], (err, dailyResult) => {
-      if (err) {
-        console.error("Error fetching daily attendance:", err.message);
-        return res
-          .status(500)
-          .json({ message: "Failed to fetch attendance overview" });
-      }
-
-      db.query(queryPreviousDay, [userId], (err, previousDayResult) => {
+    dbCallback.query(
+      queryDaily,
+      [userId, userId, userId],
+      (err, dailyResult) => {
         if (err) {
-          console.error(
-            "Error fetching previous day's check-out time:",
-            err.message
-          );
+          console.error("Error fetching daily attendance:", err.message);
           return res
             .status(500)
-            .json({ message: "Failed to fetch previous day's check-out time" });
+            .json({ message: "Failed to fetch attendance overview" });
         }
 
-        const formatDateTime = (dateTime) => {
-          const date = new Date(dateTime);
-          const hh = String(date.getHours()).padStart(2, "0");
-          const mi = String(date.getMinutes()).padStart(2, "0");
-          return `${hh}:${mi}`;
-        };
+        dbCallback.query(
+          queryPreviousDay,
+          [userId],
+          (err, previousDayResult) => {
+            if (err) {
+              console.error(
+                "Error fetching previous day's check-out time:",
+                err.message
+              );
+              return res.status(500).json({
+                message: "Failed to fetch previous day's check-out time",
+              });
+            }
 
-        const row = dailyResult[0] || {};
+            const formatDateTime = (dateTime) => {
+              const date = new Date(dateTime);
+              const hh = String(date.getHours()).padStart(2, "0");
+              const mi = String(date.getMinutes()).padStart(2, "0");
+              return `${hh}:${mi}`;
+            };
 
-        const overview = {
-          total_attendance: accumulatedResult[0].total_attendance || 0,
-          late: accumulatedResult[0].late || 0,
-          total_absence: 0,
-          total_work_from_office:
-            accumulatedResult[0].total_work_from_office || 0,
-          total_work_from_home: accumulatedResult[0].total_work_from_home || 0,
-          active_attendance: row.active_attendance || 0,
-          on_time: row.on_time || 0,
-          check_in_time: row.check_in_time
-            ? formatDateTime(row.check_in_time)
-            : null,
-          check_out_time: row.check_out_time
-            ? formatDateTime(row.check_out_time)
-            : null,
-        };
+            const row = dailyResult[0] || {};
 
-        res.status(200).json({
-          message: "Attendance overview fetched successfully",
-          overview,
-        });
-      });
-    });
+            const overview = {
+              total_attendance: accumulatedResult[0].total_attendance || 0,
+              late: accumulatedResult[0].late || 0,
+              total_absence: 0,
+              total_work_from_office:
+                accumulatedResult[0].total_work_from_office || 0,
+              total_work_from_home:
+                accumulatedResult[0].total_work_from_home || 0,
+              active_attendance: row.active_attendance || 0,
+              on_time: row.on_time || 0,
+              check_in_time: row.check_in_time
+                ? formatDateTime(row.check_in_time)
+                : null,
+              check_out_time: row.check_out_time
+                ? formatDateTime(row.check_out_time)
+                : null,
+            };
+
+            res.status(200).json({
+              message: "Attendance overview fetched successfully",
+              overview,
+            });
+          }
+        );
+      }
+    );
   });
 };
 

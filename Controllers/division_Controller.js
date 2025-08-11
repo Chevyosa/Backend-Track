@@ -1,9 +1,9 @@
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 
 const getAllDivisions = (req, res) => {
   const queryDivisions = "SELECT * FROM divisions";
 
-  db.query(queryDivisions, (err, divisionsResult) => {
+  dbCallback.query(queryDivisions, (err, divisionsResult) => {
     if (err) {
       console.error("Error retrieving divisions:", err.message);
       return res.status(500).json({ message: "Database Error", error: err });
@@ -19,7 +19,7 @@ const getAllDivisions = (req, res) => {
 
       return new Promise((resolve, reject) => {
         const queryUserName = "SELECT name FROM users WHERE userId = ?";
-        db.query(queryUserName, [userId], (err, userResult) => {
+        dbCallback.query(queryUserName, [userId], (err, userResult) => {
           if (err) {
             console.error("Error retrieving user name:", err.message);
             return reject(err);
@@ -27,22 +27,26 @@ const getAllDivisions = (req, res) => {
 
           const queryProgramName =
             "SELECT programName FROM programs WHERE programId = ?";
-          db.query(queryProgramName, [programId], (err, programResult) => {
-            if (err) {
-              console.error("Error retrieving program name:", err.message);
-              return reject(err);
+          dbCallback.query(
+            queryProgramName,
+            [programId],
+            (err, programResult) => {
+              if (err) {
+                console.error("Error retrieving program name:", err.message);
+                return reject(err);
+              }
+
+              const programName = programResult.length
+                ? programResult[0].programName
+                : "Program not found";
+
+              resolve({
+                divisionId: division.divisionId,
+                ...division,
+                programName: programName,
+              });
             }
-
-            const programName = programResult.length
-              ? programResult[0].programName
-              : "Program not found";
-
-            resolve({
-              divisionId: division.divisionId,
-              ...division,
-              programName: programName,
-            });
-          });
+          );
         });
       });
     });

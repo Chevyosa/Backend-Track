@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { infinite_track_connection: db } = require("../dbconfig.js");
+const { dbCallback } = require("../dbconfig.js");
 
 const verifyToken = (req, res, next) => {
   const token = req.header("Authorization")?.split(" ")[1];
@@ -14,7 +14,7 @@ const verifyToken = (req, res, next) => {
     req.user = verified;
 
     const queryFindRole = "SELECT * FROM roles WHERE roleId = ?";
-    db.query(queryFindRole, [req.user.role], (err, result) => {
+    dbCallback.query(queryFindRole, [req.user.role], (err, result) => {
       if (err) {
         return res.status(500).json({ message: "Database error", error: err });
       }
