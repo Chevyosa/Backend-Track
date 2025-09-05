@@ -345,6 +345,41 @@ const updateUserbyAdmin = (req, res) => {
   });
 };
 
+const resetPasswordByAdmin = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    dbCallback.query(
+      "UPDATE users SET password = ? WHERE userId = ?",
+      [hashedPassword, userId],
+      (err, result) => {
+        if (err) {
+          console.error("Error resetting password:", err.message);
+          return res.status(500).json({ message: "Failed to reset password" });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res
+          .status(200)
+          .json({ message: "Password reset successfully by admin" });
+      }
+    );
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
 const updateUser = (req, res) => {
   const userId = parseInt(req.params.id);
   const { phone_number, address } = req.body;
@@ -649,4 +684,5 @@ module.exports = {
   getDeactivatedUsers,
   softDeleteUser,
   reactivateUser,
+  resetPasswordByAdmin,
 };

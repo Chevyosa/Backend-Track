@@ -10,6 +10,7 @@ const {
   getDeactivatedUsers,
   softDeleteUser,
   reactivateUser,
+  resetPasswordByAdmin,
 } = require("../Controllers/user_Controller");
 
 const router = express.Router();
@@ -17,6 +18,14 @@ const uploadProfile = require("../middleware/uploadProfile");
 const { verifyToken, checkRole } = require("../middleware/authMiddleWare");
 
 router.post("/register", register);
+
+router.post(
+  "/resetpasswordbyadmin/:id",
+  verifyToken,
+  checkRole(["Admin"]),
+  resetPasswordByAdmin
+);
+
 router.put(
   "/updatebyadmin/:id",
   verifyToken,
