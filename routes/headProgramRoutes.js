@@ -1,13 +1,8 @@
 const express = require("express");
-const {
-  getHeadProgramById,
-  getAllHeadPrograms,
-} = require("../Controllers/headProgram_Controller");
-
+const { headProgramController } = require("../Controllers");
 const router = express.Router();
 
-router.get("/get", getAllHeadPrograms);
-
-router.get("/get/:headprogramId", getHeadProgramById);
+router.get("/get", headProgramController.getAllHeadPrograms);
+router.get("/get/:headprogramId", headProgramController.getHeadProgramById);
 
 module.exports = router;

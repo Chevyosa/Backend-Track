@@ -2,7 +2,6 @@ const { dbCallback, dbPromise } = require("../dbconfig.js");
 const getSheetsClient = require("../utils/googleSheets.js");
 require("dotenv").config();
 
-// Format waktu saja (tanpa tanggal)
 const formatTimeOnly = (datetime) => {
   const date = new Date(datetime);
   const hours = `${date.getHours()}`.padStart(2, "0");
@@ -112,7 +111,6 @@ const getTodaysAttendance = (req, res) => {
   }
 };
 
-// FASTEST Attendance
 const getFastestAttendance = (req, res) => {
   try {
     const query = `
@@ -194,7 +192,6 @@ const filteredFastestAttendance = (req, res) => {
   }
 };
 
-// LATEST Attendance
 const getLatestAttendance = (req, res) => {
   const countQuery = `
     SELECT COUNT(*) AS total FROM attendance 

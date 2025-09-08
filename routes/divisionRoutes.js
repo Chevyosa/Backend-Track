@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { divisionController } = require("../Controllers");
 
-const { getAllDivisions } = require("../Controllers/division_Controller");
-
-router.get("/get", getAllDivisions);
+router.get("/get", divisionController.getAllDivisions);
 
 module.exports = router;

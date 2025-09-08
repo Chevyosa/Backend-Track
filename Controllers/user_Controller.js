@@ -44,7 +44,6 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Validasi password
     const passwordRegex =
       /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
@@ -183,7 +182,6 @@ const insertUser = async (
     const userId = userInsertResult.insertId;
     const profile_photo = `https://api.dicebear.com/9.x/avataaars-neutral/png?seed=${userId}`;
 
-    // Update profile_photo setelah tahu userId
     await queryAsync("UPDATE users SET profile_photo = ? WHERE userId = ?", [
       profile_photo,
       userId,

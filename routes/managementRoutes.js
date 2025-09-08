@@ -1,15 +1,10 @@
 const express = require("express");
-const {
-  getAllDivisions,
-  getAllPrograms,
-  getAllRoles,
-  getAllPositions,
-} = require("../Controllers/managementController");
 const router = express.Router();
+const { managementController } = require("../Controllers");
 
-router.get("/getDivisions", getAllDivisions);
-router.get("/getPrograms", getAllPrograms);
-router.get("/getRoles", getAllRoles);
-router.get("/getPositions", getAllPositions);
+router.get("/getDivisions", managementController.getAllDivisions);
+router.get("/getPrograms", managementController.getAllPrograms);
+router.get("/getRoles", managementController.getAllRoles);
+router.get("/getPositions", managementController.getAllPositions);
 
 module.exports = router;
