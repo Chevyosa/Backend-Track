@@ -35,7 +35,7 @@ exports.sendOTP = (req, res) => {
       }
 
       const otp = generateOTP();
-      otpCache[email] = otp; // Menyimpan OTP yang dikirim
+      otpCache[email] = otp;
 
       sendOTP(email, otp)
         .then(() => {
@@ -53,7 +53,6 @@ exports.sendOTP = (req, res) => {
 exports.verifyOTP = (req, res) => {
   const { email, otp } = req.body;
 
-  // Memverifikasi OTP yang diterima dengan OTP yang dikirim
   const isVerified = speakeasy.totp.verify({
     secret: process.env.OTP_SECRET || "secret_key",
     encoding: "base32",
@@ -63,7 +62,7 @@ exports.verifyOTP = (req, res) => {
   });
 
   if (isVerified) {
-    otpVerifiedCache[email] = true; // Tandai OTP berhasil diverifikasi
+    otpVerifiedCache[email] = true;
     console.log(`OTP verified for ${email}`);
     return res.status(200).json({ message: "OTP verified" });
   } else {

@@ -1,11 +1,6 @@
 const express = require("express");
-const {
-  getAllDivisions,
-  getAllPrograms,
-  getAllRoles,
-  getAllPositions,
-} = require("../Controllers/managementController");
 const router = express.Router();
+const { managementController } = require("../Controllers");
 
 router.post("/programs", managementController.addProgram);
 router.post("/divisions", managementController.addDivision);

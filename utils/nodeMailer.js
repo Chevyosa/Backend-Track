@@ -1,18 +1,10 @@
 const nodemailer = require("nodemailer");
 require("dotenv").config();
-const mysql = require("mysql2/promise");
+const { dbPromise } = require("../dbconfig");
 
 async function sendOTP(email, otp) {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.HOST,
-      user: process.env.UNAME,
-      password: process.env.PASSWORD,
-      database: "infinite_track",
-      port: process.env.DBPORT,
-    });
-
-    const [rows] = await connection.execute(
+    const [rows] = await dbPromise.execute(
       "SELECT name FROM users WHERE email = ?",
       [email]
     );
@@ -147,15 +139,7 @@ async function sendOTP(email, otp) {
 
 async function sendAccountReactivation(email) {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.HOST,
-      user: process.env.UNAME,
-      password: process.env.PASSWORD,
-      database: "infinite_track",
-      port: process.env.DBPORT,
-    });
-
-    const [rows] = await connection.execute(
+    const [rows] = await dbPromise.execute(
       "SELECT name FROM users WHERE email = ?",
       [email]
     );

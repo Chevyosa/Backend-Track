@@ -1,17 +1,12 @@
 const { dbCallback } = require("../dbconfig");
 const { haversineDistance } = require("../utils/geofence");
-const { verifyToken } = require("../middleware/authMiddleWare");
 
 const getAttendanceCategoryId = (category) => {
   return category === "Work From Office" ? 1 : 2;
 };
 
-const getAttendanceStatusId = (status) => {
-  return status === "late" ? 1 : 2;
-};
-
 const officeLocation = {
-  latitude: 1.1853587, // Latitude yang benar
+  latitude: 1.1853587,
   longitude: 104.1021903,
 };
 
@@ -25,8 +20,8 @@ const handleAttendance = (req, res) => {
   const now = new Date();
   const currentHour = now.getHours();
   let attendance_status_id;
-  const randomMinute = Math.floor(Math.random() * 60); // Acak menit antara 0-59
-  const randomSecond = Math.floor(Math.random() * 60); // Acak detik antara 0-59
+  const randomMinute = Math.floor(Math.random() * 60);
+  const randomSecond = Math.floor(Math.random() * 60);
   now.setHours(8, randomMinute, randomSecond, 0);
 
   const nowUTC = new Date();
@@ -110,7 +105,6 @@ const handleAttendance = (req, res) => {
                 .json({ message: "Failed to retrieve attendance details" });
             }
 
-            // Tentukan pesan berdasarkan attendance_status_id
             const message =
               attendance_status_id === 1
                 ? "Check-in successful"
@@ -169,7 +163,6 @@ const handleAttendance = (req, res) => {
                 .json({ message: "No active check-in found for today" });
             }
 
-            // Ambil status attendance dalam bentuk string
             const queryStatus = `
             SELECT s.attendance_status AS attendance_status
             FROM attendance a

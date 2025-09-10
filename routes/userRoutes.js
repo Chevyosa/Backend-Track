@@ -1,29 +1,16 @@
 const express = require("express");
-const {
-  updateUser,
-  updateUserbyAdmin,
-  deleteUser,
-  getAllUsers,
-  getUserById,
-  register,
-  getAttendanceByUserId,
-  getDeactivatedUsers,
-  softDeleteUser,
-  reactivateUser,
-  resetPasswordByAdmin,
-} = require("../Controllers/user_Controller");
-
+const { userController } = require("../Controllers");
 const router = express.Router();
 const uploadProfile = require("../middleware/uploadProfile");
 const { verifyToken, checkRole } = require("../middleware/authMiddleWare");
 
-router.post("/register", register);
+router.post("/register", userController.register);
 
 router.post(
   "/resetpasswordbyadmin/:id",
   verifyToken,
   checkRole(["Admin"]),
-  resetPasswordByAdmin
+  userController.resetPasswordByAdmin
 );
 
 router.put(
@@ -31,20 +18,24 @@ router.put(
   verifyToken,
   checkRole(["Admin"]),
   uploadProfile.single("profile_photo"),
-  updateUserbyAdmin
+  userController.updateUserbyAdmin
 );
-router.put("/:id", uploadProfile.single("profile_photo"), updateUser);
-router.delete("/:id", deleteUser);
-router.delete("/softdelete/:id", softDeleteUser);
+router.put(
+  "/:id",
+  uploadProfile.single("profile_photo"),
+  userController.updateUser
+);
+router.delete("/:id", userController.deleteUser);
+router.delete("/softdelete/:id", userController.softDeleteUser);
 router.patch(
   "/reactivate/:id",
   verifyToken,
   checkRole(["Admin"]),
-  reactivateUser
+  userController.reactivateUser
 );
-router.get("/get", getAllUsers);
-router.get("/get-deactivated", getDeactivatedUsers);
-router.get("/get/:id", getUserById);
-router.get("/attendance/:id", getAttendanceByUserId);
+router.get("/get", userController.getAllUsers);
+router.get("/get-deactivated", userController.getDeactivatedUsers);
+router.get("/get/:id", userController.getUserById);
+router.get("/attendance/:id", userController.getAttendanceByUserId);
 
 module.exports = router;
