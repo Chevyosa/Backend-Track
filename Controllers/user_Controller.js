@@ -211,17 +211,26 @@ const insertUser = async (
       { expiresIn: "1h" }
     );
 
+    const rows = await queryAsync(
+      `SELECT 
+      u.userId, u.name, u.email,
+      u.profile_photo, u.is_deleted,
+      lb.annual_balance, lb.annual_used,
+      r.roleId, r.role,
+      d.divisionId, d.division,
+      p.positionId, p.positionName
+   FROM users u
+   JOIN leave_balance lb ON u.userId = lb.userId
+   LEFT JOIN roles r ON u.roleId = r.roleId
+   LEFT JOIN divisions d ON u.divisionId = d.divisionId
+   LEFT JOIN positions p ON u.positionId = p.positionId
+   WHERE u.userId = ?`,
+      [userId]
+    );
+
     res.status(201).json({
-      user: {
-        id: userId,
-        name,
-        annual_balance,
-        annual_used,
-        profile_photo,
-      },
-      token: {
-        token,
-      },
+      user: rows[0],
+      token: { token },
     });
   } catch (err) {
     console.error("Error inserting user:", err.message);
