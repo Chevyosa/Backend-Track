@@ -13,6 +13,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+app.options("*", cors());
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/", routes);
